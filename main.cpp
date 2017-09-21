@@ -101,10 +101,20 @@ int main(int argc, char *argv[])
             test_rep.rep_write(respond);
         }
         int mscend=test_time.elapsed();
-        std::cout<<"Data persecond: "<<1000.*(float)sizeof(respond)/(float)mscend <<
+        std::cout<<"data_pack_size_ is:"<<sizeof(respond)<<std::endl;
+        std::cout<<"use_time_ is :"<<mscend<<std::endl;
+
+        std::cout<<"Data persecond: "<<1000000.*(float)sizeof(respond)/(float)mscend <<
                 "Bytes!"<<std::endl;
 
         sizeof(respond);
+    }
+    else
+    {
+        std::string test;
+        std::cin>>test;
+
+        std::cout<<"Size is :"<<sizeof(test)<<std::endl;
     }
 
 
