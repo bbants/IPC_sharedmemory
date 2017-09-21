@@ -305,6 +305,7 @@ inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,C
         }
     }
     qSharedMemory->unlock();
+    //qSharedMemory->connect(qSharedMemory,)
     return true;
 }
 

@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
         std::cout<<"please input request: "<<std::endl;
         std::cin>>request;
 
-        for(size_t i=0;i<1000;i++)
+        for(size_t i=0;i<100000;i++)
         {
             test_req.req(request);
         }
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
         QTime test_time;
         test_time.start();
-        for(size_t i=0;i<1000;i++)
+        for(size_t i=0;i<100000;i++)
         {
             test_rep.rep_write(respond);
         }
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
         std::cout<<"data_pack_size_ is:"<<sizeof(respond)<<std::endl;
         std::cout<<"use_time_ is :"<<mscend<<std::endl;
 
-        std::cout<<"Data persecond: "<<1000000.*(float)sizeof(respond)/(float)mscend <<
+        std::cout<<"Data persecond: "<<100000000.*(float)respond.length()/(float)mscend <<
                 "Bytes!"<<std::endl;
 
         sizeof(respond);
