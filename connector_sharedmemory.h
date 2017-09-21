@@ -33,7 +33,8 @@ namespace ipc {
     {
         COMMAND_DEFAULT=200,
         COMMAND_REQUEST=201,
-        COMMAND_RESPONSE=202
+        COMMAND_RESPONSE=202,
+        COMMAND_RECIVE=203
     };
 
     struct IPC_DATA
