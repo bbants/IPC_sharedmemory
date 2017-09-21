@@ -17,11 +17,11 @@ namespace ipc {
     const std::string ipc_sharedmemory_type_name="ipc_sharedmemory";
     const std::string ipc_sharedmemory_id="100000";
 
-    const double IPC_CHECK_DELAY=0.001;
-    const double WR_MEMORY_DELAY=0.01;
+    const double IPC_CHECK_DELAY=0.0001;
+    const double WR_MEMORY_DELAY=0.0001;
     const double WR_MEMORY_TOLERANCE=1.0;
-    const double SR_MESSAGE_DELAY=0.01;
-    const double SR_MESSAGE_TOLERANCE=5.0;
+    const double SR_MESSAGE_DELAY=0.0001;
+    const double SR_MESSAGE_TOLERANCE=1.0;
 
     enum class IPC_MODE
     {
@@ -52,11 +52,11 @@ namespace ipc {
         }
         void print()
         {
-            std::cout<<"/------------------------------<Read the IPC_DATA [start!]>----------------------------/"<<std::endl;
+            std::cout<<"<Read the IPC_DATA [start!]>"<<std::endl;
             std::cout<<"ipc_mode is: "<<(int)ipc_mode_<<"||"
                     <<"command_mode is: "<<(int)command_mode_<<std::endl
                    <<"data: "<<this->data.toStdString()<<std::endl
-                  <<"/------------------------------<Read the IPC_DATA [finish!]>---------------------------/"<<std::endl<<std::endl;
+                  <<"<Read the IPC_DATA [finish!]>"<<std::endl<<std::endl;
         }
     };
 

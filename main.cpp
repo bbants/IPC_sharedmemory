@@ -29,7 +29,8 @@ int main(int argc, char *argv[])
     //std::cout<<"finish recive!!!!!!!!!!"<<std::endl;
     */
     //============================test for req/rep==========================//
-    if(argc==2&&atoi(argv[1])==(int)IPC_MODE::MODE_REQUEST)
+    /*
+    if(argc==2&&strcmp(argv[1],"client")==0)
     {
 
 
@@ -42,43 +43,76 @@ int main(int argc, char *argv[])
         ipc::write_memory(test_req.getSharedMemory(),defaule_data_);
 
         std::string request;
-        /*
-        while(true)
-        {
-            std::cout<<"please input request: "<<std::endl;
-            std::cin>>request;
-            if(request.compare("exit")==0)
-            {
-                break;
-            }
-            std::cout<<test_req.req(request)<<std::endl;
 
-        }
-        */
-        std::cout<<"please input request: "<<std::endl;
-        std::cin>>request;
-        test_req.req(request);
+
+
+        std::cout<<"Respond from server: "<<test_req.req(request)<<std::endl;
+
 
     }
-    else if(argc==2&&atoi(argv[1])==(int)IPC_MODE::MODE_RESPOND)
+    else if(argc==2&&strcmp(argv[1],"server")==0)
     {
         std::cout<<"||===========This is server===========||"<<std::endl;
         ipc_sharedmemory test_rep(IPC_MODE::MODE_RESPOND,"test");
         test_rep.init("");
         std::string respond;
-        std::cout<<"Please input respond"<<std::endl;
-        /*
-        while(true)
-        {
-            std::cout<<test_rep.rep_read();
-            test_rep.rep_write("This is respond!!!!!!!!!!");
-        }
-        */
+
+        std::cout<<"Please input respond: "<<std::endl;
         std::cin>>respond;
-        std::cout<<test_rep.rep_read();
+        std::cout<<"Request from clinet: "<<test_rep.rep_read()<<std::endl;
         test_rep.rep_write(respond);
+
+
+    }
+    */
+    //=====================test for the speed of rep/req==================//
+
+    if(argc==2&&strcmp(argv[1],"client")==0)
+    {
+        std::cout<<"||===========This is client===========||"<<std::endl;
+        ipc_sharedmemory test_req(IPC_MODE::MODE_REQUEST,"test");
+        test_req.init("");
+        std::string request;
+
+        std::cout<<"please input request: "<<std::endl;
+        std::cin>>request;
+
+        for(size_t i=0;i<1000;i++)
+        {
+            test_req.req(request);
+        }
+
     }
 
+    else if(argc==2&&strcmp(argv[1],"server")==0)
+    {
+        std::cout<<"||===========This is server===========||"<<std::endl;
+        ipc_sharedmemory test_rep(IPC_MODE::MODE_RESPOND,"test");
+        test_rep.init("");
+        std::string respond;
+
+        std::cout<<"Please input respond: "<<std::endl;
+        std::cin>>respond;
+
+        QTime test_time;
+        test_time.start();
+        for(size_t i=0;i<1000;i++)
+        {
+            test_rep.rep_write(respond);
+        }
+        int mscend=test_time.elapsed();
+        std::cout<<"Data persecond: "<<1000.*(float)sizeof(respond)/(float)mscend <<
+                "Bytes!"<<std::endl;
+
+        sizeof(respond);
+    }
+
+
+
+
+
+
+    //==========================test 01===================================//
     //delete ipc_data_read;
     //delete ipc_data_write;
 
