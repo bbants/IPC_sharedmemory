@@ -113,23 +113,38 @@ int main(int argc, char *argv[])
     else if (argc==2&&strcmp(argv[1],"sub")==0)
     {
         std::cout<<"||===========This is client===========||"<<std::endl;
-        ipc_sharedmemory test_sub_(IPC_MODE::MODE_SUBSCRIBE,"test");
-        test_sub_.init("");
+        ipc_sharedmemory* test_sub_=new ipc_sharedmemory(IPC_MODE::MODE_SUBSCRIBE,"test");
+        test_sub_->init("");
         std::string sub_name_;
 
         std::cout<<"Please input sub_name: "<<std::endl;
         std::cin>>sub_name_;
-        test_sub_.sub_register(sub_name_);
+
+        test_sub_->sub_register(sub_name_);
 
     }
     else if(argc==2&&strcmp(argv[1],"pub")==0)
     {
          std::cout<<"||===========This is server===========||"<<std::endl;
          ipc_sharedmemory* test_pub=new ipc_sharedmemory(IPC_MODE::MODE_PUBLISH,"test",&a);
+         test_pub->setPublishData("a test");
          test_pub->init("");
-         test_pub->start_test_timer();
-         //test_pub->start_test_timer();
 
+         std::string test_data_string_;
+
+         /*
+         std::cout<<"publish data:"<<std::endl;
+         std::cin>>test_data_string_;
+         test_pub->pub_publish(test_data_string_);
+         */
+         //test_pub->start_test_timer();
+         //test_pub->start_test_timer();
+         //std::string test_data_string_;
+
+         //for(size_t i=0;i<10;i++)
+         //{
+         //test_pub->pub_publish();
+         //}
     }
     else
     {

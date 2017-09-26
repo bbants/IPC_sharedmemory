@@ -6,28 +6,15 @@
 
 ipc::ipc_sharedmemory::ipc_sharedmemory(IPC_MODE connector_mode,const std::string connector_name,QObject* parent)
     :QObject(parent)
-    ,pub_register_timer(new QTimer(parent))
-    ,test_timer_(new QTimer(parent))
-
+    ,pub_register_timer(new QTimer(parent)) 
+    ,pub_publish_timer(new QTimer(parent))
+    ,sub_recive_timer(new QTimer(parent))
 {
     this->connector_name=connector_name;
     this->connector_mode=connector_mode;
     std::cout<<"connector_mode is:"<<(int)this->connector_mode<<std::endl;
     std::cout<<"connector_name is:"<<this->connector_name<<std::endl;
-    /*
-    connect(test_timer_
-            ,SIGNAL(timeout())
-            ,this
-            ,SLOT(slotTimeOut())
-            );
-    */
-    connect(pub_register_timer
-            ,SIGNAL(timeout())
-            ,this
-            ,SLOT(pub_register())
-            );
 
-    //startTimer(1000);
 }
 
 /*
@@ -90,17 +77,21 @@ void ipc::ipc_sharedmemory::init(const std::string& inin_str)
 
         case IPC_MODE::MODE_SUBSCRIBE:
         ipc_memory_->setKey(QString::fromStdString(connector_name));
+        connect(sub_recive_timer,SIGNAL(timeout()),this,SLOT(sub_recive()));
         break;
 
         case IPC_MODE::MODE_PUBLISH:
         ipc_memory_->setKey(QString::fromStdString(connector_name));
-        //pub_register_timer=new QTimer(this);
-        //QTimer::singleShot(200,this,SLOT(pub_register()));
+        connect(pub_register_timer,SIGNAL(timeout()),this,SLOT(pub_register()));
+        connect(pub_publish_timer,SIGNAL(timeout()),this,SLOT(pub_publish_test()));
+        pub_register_timer->start(100);
+        pub_publish_timer->start(10);
         break;
     }
     IPC_DATA*defaule_data_= new IPC_DATA;
     ipc::write_memory(ipc_memory_,defaule_data_);
 }
+
 
 bool ipc::ipc_sharedmemory::sub_register(std::string sub_name_)
 {
@@ -128,6 +119,10 @@ bool ipc::ipc_sharedmemory::sub_register(std::string sub_name_)
             std::cout<<"Register as: "<<register_data_->data.toStdString()<<std::endl;
             ipc_sub_memory_=new QSharedMemory;
             ipc_sub_memory_->setKey(QString::fromStdString(sub_name_));
+            IPC_DATA* default_data_=new IPC_DATA;
+            ipc::write_memory(ipc_sub_memory_,default_data_);
+            std::cout<<"Start to recive from pub server"<<std::endl;
+            sub_recive_timer->start(10);
             break;
         }
         else if(ipc::recive_message(ipc_memory_,register_data_,COMMAND_MODE::COMMAND_REG_FAILED))
@@ -136,6 +131,7 @@ bool ipc::ipc_sharedmemory::sub_register(std::string sub_name_)
             return false;
         }
     }
+
     return true;
 }
 //
@@ -147,7 +143,7 @@ void ipc::ipc_sharedmemory::pub_register()
 
     check_mode(IPC_MODE::MODE_PUBLISH);
     IPC_DATA* register_data_=new IPC_DATA;
-    std::cout<<".";
+    //std::cout<<".";
     if(ipc::recive_message(ipc_memory_,register_data_,COMMAND_MODE::COMMAND_REGISTER))
     {
         std::cout<<std::endl<<"recive register command: "<<std::endl;
@@ -158,7 +154,7 @@ void ipc::ipc_sharedmemory::pub_register()
         {
             register_data_->command_mode_=COMMAND_MODE::COMMAND_REG_FAILED;
             ipc::send_message(ipc_memory_,register_data_,COMMAND_MODE::COMMAND_REGISTER);
-            register_data_->print();
+            //register_data_->print();
             std::cout<<"Name: "<<sub_register_name_.toStdString()<<" is already exist, try again!"<<std::endl;
             //return false;
         }
@@ -178,6 +174,142 @@ void ipc::ipc_sharedmemory::pub_register()
     //return true;
 }
 
+std::string ipc::ipc_sharedmemory::sub_recive()
+{
+    IPC_DATA* sub_recive_data;
+    sub_recive_data=new IPC_DATA;
+    std::string recive_data_;
+    //std::cout<<".";
+    if(ipc::recive_message(ipc_sub_memory_,sub_recive_data,COMMAND_MODE::COMMAND_RESPONSE))
+    {
+        recive_data_=sub_recive_data->data.toStdString();
+        std::cout<<"Recive data: "<<recive_data_<<std::endl;
+        while(true)
+        {
+            sub_recive_data->command_mode_=COMMAND_MODE::COMMAND_RECIVE;
+            if(ipc::send_message(ipc_sub_memory_,sub_recive_data,COMMAND_MODE::COMMAND_RESPONSE))
+            {
+                break;
+            }
+        }
+    }
+
+
+    delete sub_recive_data;
+    return recive_data_;
+}
+
+void ipc::ipc_sharedmemory::pub_publish_test()
+{
+    if(!check_pub_status()){}
+    else
+    {
+
+        std::cout<<"Sub clients [prepared!]"<<std::endl;
+        IPC_DATA* publish_data_=new IPC_DATA;
+        static int test=0;
+        publish_data_->data=QString::number(test++,10);
+        publish_data_->command_mode_=COMMAND_MODE::COMMAND_RESPONSE;
+
+        QMapIterator <QString,QPair<QSharedMemory*,bool>> it_pub_status_(pub_server_status_);
+        while(it_pub_status_.hasNext())
+        {
+            it_pub_status_.next();
+            std::cout<<it_pub_status_.key().toStdString();
+            //QSharedMemory* sub_memory_;
+            //sub_memory_=new QSharedMemory(it_pub_status_.key());
+
+            ipc_sub_memory_->setKey(it_pub_status_.key());
+
+            /*
+            while(true)
+            {
+                if(ipc::send_message(ipc_sub_memory_,publish_data_,COMMAND_MODE::COMMAND_RECIVE))
+                {
+                    std::cout<<"publish..";
+                    break;
+                }
+                else if(ipc::send_message(ipc_sub_memory_,publish_data_,COMMAND_MODE::COMMAND_DEFAULT))
+                {
+                    std::cout<<"publish..";
+                    break;
+                }
+            }
+            */
+            ipc::write_memory(ipc_sub_memory_,publish_data_);
+            ipc::read_memory(ipc_sub_memory_,publish_data_);
+            //publish_data_->print();
+            //delete sub_memory_;
+        }
+        delete publish_data_;
+    }
+
+}
+bool ipc::ipc_sharedmemory::pub_publish(std::string data)
+{
+    if(!check_pub_status()){return false;}
+    else
+    {
+        std::cout<<"Sub clients [prepared!]"<<std::endl;
+        IPC_DATA* publish_data_=new IPC_DATA;
+        publish_data_->data=QString::fromStdString(data);
+        publish_data_->command_mode_=COMMAND_MODE::COMMAND_RESPONSE;
+
+        QMapIterator <QString,QPair<QSharedMemory*,bool>> it_pub_status_(pub_server_status_);
+        while(it_pub_status_.hasNext())
+        {
+            it_pub_status_.next();
+            while(true)
+            {
+                if(ipc::send_message(it_pub_status_.value().first,publish_data_,COMMAND_MODE::COMMAND_RECIVE))
+                {
+                    break;
+                }
+                if(ipc::send_message(it_pub_status_.value().first,publish_data_,COMMAND_MODE::COMMAND_DEFAULT))
+                {
+                    break;
+                }
+            }
+
+        }
+        delete publish_data_;
+    }
+    return true;
+}
+
+
+bool ipc::ipc_sharedmemory::check_pub_status()
+{
+
+
+    if(pub_server_status_.size()==0)
+    {
+        //std::cout<<"No sub client register!"<<std::endl;
+        //QThread::sleep(1);
+        return false;
+    }
+
+    QMapIterator <QString,QPair<QSharedMemory*,bool>> it_pub_status_(pub_server_status_);
+    IPC_DATA* check_data=new IPC_DATA;
+    size_t  num_prepare_=0;
+    while(it_pub_status_.hasNext())
+    {
+        it_pub_status_.next();
+
+        if(ipc::check_command(it_pub_status_.value().first,check_data,COMMAND_MODE::COMMAND_DEFAULT))
+        {num_prepare_++;}
+        else if(ipc::check_command(it_pub_status_.value().first,check_data,COMMAND_MODE::COMMAND_RECIVE))
+        {num_prepare_++;}
+        else
+        {
+            std::cout<<"Some sub client are not prepared!"<<std::endl;
+            return false;
+        }
+    }
+
+    delete check_data;
+    return true;
+}
 
 std::string ipc::ipc_sharedmemory::req(const std::string& request)
 {
@@ -398,9 +530,9 @@ inline bool ipc::check_command(QSharedMemory* qSharedMemory,IPC_DATA* ipc_check_
 inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,COMMAND_MODE commamd_mode_)
 {
     IPC_DATA* ipc_check_data_=new IPC_DATA;
-    QTime sr_time_;
+    //QTime sr_time_;
     //std::cout<<"//Start to send message://"<<std::endl;
-    sr_time_.restart();
+    //sr_time_.restart();
     //while(sr_time_.elapsed()<ipc::SR_MESSAGE_TOLERANCE*1000)
     while(true)
     {
@@ -413,11 +545,12 @@ inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,C
         //QThread::sleep(SR_MESSAGE_DELAY);
     }
     //std::cout<<std::endl;
+    /*
     if(int timeS=sr_time_.restart()>ipc::SR_MESSAGE_TOLERANCE*1000)
     {
-        std::cout<<"send overtime! use:"<<timeS<<std::endl;
+        //std::cout<<"send overtime! use:"<<timeS<<std::endl;
         //return false;
-    }
+    }*/
     //bool message_sent=
     while(true)
     {
@@ -441,18 +574,11 @@ inline bool ipc::recive_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_
     //std::cout<<"//Start to recive message://"<<std::endl;
     sr_time_.start();
     //while(sr_time_.elapsed()<ipc::SR_MESSAGE_TOLERANCE*1000)
-    while(true)
+
+    if(!ipc::check_command(qSharedMemory,ipc_check_data_,commamd_mode_))
     {
-        if(ipc::check_command(qSharedMemory,ipc_check_data_,commamd_mode_))
-        {
-            //ipc_check_data_->print();
-            //qSharedMemory->lock();
-            break;
-        }
-        //std::cout<<".";
-        //QThread::sleep(SR_MESSAGE_DELAY);
+        return false;
     }
-    //std::cout<<std::endl;
     if(sr_time_.elapsed()>ipc::SR_MESSAGE_TOLERANCE*1000)
     {
         std::cout<<"recive overtime!";

@@ -99,34 +99,57 @@ namespace ipc {
         std::string get_connector_name();
         IPC_MODE get_connector_mode();
         QSharedMemory* getSharedMemory();
-    //============================rep/req================================//
-        std::string req(const std::string& request);
-
-        void        rep_write(const std::string &respond);
-        std::string rep_read();
-    //=============================sub/pub===============================//
-        bool sub_register(std::string sub_name);
-    public slots:
-        void pub_register();
-
-
     private:
         void check_mode(IPC_MODE mode);
         void check_port(std::string connector_name);
         void check_port_assist();
 
-    private:
-        void send_message(QString message);
+    public:
+    //============================rep/req================================//
+        std::string req(const std::string& request);
+
+        void        rep_write(const std::string &respond);
+        std::string rep_read();
+
+    //===================================================================//
+
+
+    //=============================sub/pub===============================//
+        bool sub_register(std::string sub_name);
+    public slots:
+        void pub_register();
+
+        bool pub_publish(std::string);
+        bool check_pub_status();
+        std::string sub_recive();
+    //===================================================================//
+
+
+    //================================test===============================//
+        void pub_publish_test();
+    //===================================================================//
+
 
     private:
         QSharedMemory* ipc_memory_;
         std::string   connector_name;
         IPC_MODE      connector_mode;
+
     private:
         QSharedMemory* ipc_sub_memory_;
         QTimer*        pub_register_timer;
+        QTimer*        pub_publish_timer;
+        QTimer*        sub_recive_timer;
+        std::string    publish_data_toSend_;
+        QMap<QString,QPair<QSharedMemory*,bool>> pub_server_status_;
 
+    public:
+        void setPublishData(std::string data)
+        {
+            this->publish_data_toSend_=data;
+        }
         //===========================test===========================//
+        /*
     public:
         QTimer*        test_timer_;
         void start_test_timer()
@@ -139,10 +162,10 @@ namespace ipc {
             static int k = 0;
             std::cout << "pulse: " << QString::number(k++).toStdString() << std::endl;
         }
-
+        */
         //===========================test end==========================//
-    private:
-        QMap<QString,QPair<QSharedMemory*,bool>> pub_server_status_;
+
+
 
 
     };
