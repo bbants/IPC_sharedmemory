@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include "connector_sharedmemory.h"
 
+
 using namespace ipc;
 
 
@@ -109,12 +110,60 @@ int main(int argc, char *argv[])
 
         sizeof(respond);
     }
+    else if (argc==2&&strcmp(argv[1],"sub")==0)
+    {
+        std::cout<<"||===========This is client===========||"<<std::endl;
+        ipc_sharedmemory test_sub_(IPC_MODE::MODE_SUBSCRIBE,"test");
+        test_sub_.init("");
+        std::string sub_name_;
+
+        std::cout<<"Please input sub_name: "<<std::endl;
+        std::cin>>sub_name_;
+        test_sub_.sub_register(sub_name_);
+
+    }
+    else if(argc==2&&strcmp(argv[1],"pub")==0)
+    {
+         std::cout<<"||===========This is server===========||"<<std::endl;
+         ipc_sharedmemory* test_pub=new ipc_sharedmemory(IPC_MODE::MODE_PUBLISH,"test",&a);
+         test_pub->init("");
+         test_pub->start_test_timer();
+         //test_pub->start_test_timer();
+
+    }
     else
     {
-        std::string test;
-        std::cin>>test;
+        /*
+        QTimer t;
+        QObject::connect(&t, &QTimer::timeout, [&]()
+        {
+            std::cout<<"aaaaaaa";
+            a.exit();
+        });
+        t.start(1000);
+        */
+        /*
+        std::cout<<"||===========This is server===========||"<<std::endl;
+        ipc_sharedmemory test_pub(IPC_MODE::MODE_PUBLISH,"test");
+        test_pub.init("");
+        test_pub.test_timer();
+        test_pub.
+        */
 
-        std::cout<<"Size is :"<<sizeof(test)<<std::endl;
+        //std::cout<<"||===========This is client===========||"<<std::endl;
+        //ipc_sharedmemory* test_sub_=new ipc_sharedmemory(IPC_MODE::MODE_SUBSCRIBE,"test",&a);
+        //test_sub_.init("");
+        //test_sub_->start_test_timer();
+
+        //TimerTest* tt = new TimerTest(&a);
+        //tt->start();
+        IPC_DATA* test_data_;
+        test_data_=new IPC_DATA;
+        QSharedMemory* test;
+        test=new QSharedMemory;
+        test->setKey("test");
+        read_memory(test,test_data_);
+        test_data_->print();
     }
 
 

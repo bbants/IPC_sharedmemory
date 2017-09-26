@@ -1,7 +1,8 @@
 #ifndef CONNECTOR_SHAREDMEMORY_H
 #define CONNECTOR_SHAREDMEMORY_H
 
-#include "QObject"
+//#include <QtWidgets/QMainWindow>
+#include <QObject>
 #include "QSharedMemory"
 #include "QBuffer"
 #include "QDataStream"
@@ -9,6 +10,8 @@
 #include <QThread>
 #include "QtGlobal"
 #include "QTime"
+#include "QMap"
+#include <QTimer>
 
 #include "iostream"
 #include "sstream"
@@ -27,14 +30,20 @@ namespace ipc {
     {
         MODE_DEFAULT=100,
         MODE_REQUEST=101,
-        MODE_RESPOND=102
+        MODE_RESPOND=102,
+        MODE_SUBSCRIBE=105,
+        MODE_PUBLISH=106
     };
     enum class COMMAND_MODE
     {
         COMMAND_DEFAULT=200,
         COMMAND_REQUEST=201,
         COMMAND_RESPONSE=202,
-        COMMAND_RECIVE=203
+        COMMAND_RECIVE=203,
+
+        COMMAND_REGISTER=204,
+        COMMAND_REG_FINSHED=205,
+        COMMAND_REG_FAILED=206
     };
 
     struct IPC_DATA
@@ -72,14 +81,21 @@ namespace ipc {
     class ipc_sharedmemory:
             public QObject
     {
+        Q_OBJECT
+
     public:
-        ipc_sharedmemory(IPC_MODE connector_mode,const std::string connector_name="");
+        ipc_sharedmemory(IPC_MODE connector_mode,const std::string connector_name="",QObject* parent=0);
         //ipc_sharedmemory(const ipc_sharedmemory & ipc);
         virtual ~ipc_sharedmemory(){}
 
+        //void timerEvent(QTimerEvent *event) override;
+    public:
+        explicit ipc_sharedmemory(QObject *parent = nullptr);
+
+
     public:
         void init(const std::string& inin_str);
-        void test();
+        //void test();
         std::string get_connector_name();
         IPC_MODE get_connector_mode();
         QSharedMemory* getSharedMemory();
@@ -88,7 +104,10 @@ namespace ipc {
 
         void        rep_write(const std::string &respond);
         std::string rep_read();
-
+    //=============================sub/pub===============================//
+        bool sub_register(std::string sub_name);
+    public slots:
+        void pub_register();
 
 
     private:
@@ -103,11 +122,40 @@ namespace ipc {
         QSharedMemory* ipc_memory_;
         std::string   connector_name;
         IPC_MODE      connector_mode;
-
     private:
+        QSharedMemory* ipc_sub_memory_;
+        QTimer*        pub_register_timer;
+
+        //===========================test===========================//
+    public:
+        QTimer*        test_timer_;
+        void start_test_timer()
+        {
+            //test_timer_->start(100);
+            pub_register_timer->start(1000);
+        }
+    public slots:
+        inline void slotTimeOut(){
+            static int k = 0;
+            std::cout << "pulse: " << QString::number(k++).toStdString() << std::endl;
+        }
+
+        //===========================test end==========================//
+    private:
+        QMap<QString,QPair<QSharedMemory*,bool>> pub_server_status_;
 
 
     };
+
+
+
+
+
+
+
+
+
+
 
 }
 
