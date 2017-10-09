@@ -110,10 +110,11 @@ bool ipc::ipc_sharedmemory::sub_register(std::string sub_name_)
         {
             break;
         }
-
+        QThread::sleep(1);
     }
     while(true)
     {
+        std::cout<<"Wait for permmit..."<<std::endl;
         if(ipc::recive_message(ipc_memory_,register_data_,COMMAND_MODE::COMMAND_REG_FINSHED))
         {
             std::cout<<"Register as: "<<register_data_->data.toStdString()<<std::endl;
@@ -139,10 +140,12 @@ bool ipc::ipc_sharedmemory::sub_register(std::string sub_name_)
 //
 void ipc::ipc_sharedmemory::pub_register()
 {
-    //std::cout<<"bengkui!"<<std::endl;
+    //std::cout<<"Check register!"<<std::endl;
 
     check_mode(IPC_MODE::MODE_PUBLISH);
     IPC_DATA* register_data_=new IPC_DATA;
+    //ipc::read_memory(ipc_memory_,register_data_);
+    //register_data_->print();
     //std::cout<<".";
     if(ipc::recive_message(ipc_memory_,register_data_,COMMAND_MODE::COMMAND_REGISTER))
     {
@@ -534,16 +537,15 @@ inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,C
     //std::cout<<"//Start to send message://"<<std::endl;
     //sr_time_.restart();
     //while(sr_time_.elapsed()<ipc::SR_MESSAGE_TOLERANCE*1000)
-    while(true)
+    //while(true)
+    //{
+    if(!ipc::check_command(qSharedMemory,ipc_check_data_,commamd_mode_))
     {
-        if(ipc::check_command(qSharedMemory,ipc_check_data_,commamd_mode_))
-        {
-            //qSharedMemory->lock();
-            break;
-        }
-        //std::cout<<".";
-        //QThread::sleep(SR_MESSAGE_DELAY);
+        return false;
     }
+    //std::cout<<".";
+    //QThread::sleep(SR_MESSAGE_DELAY);
+    //}
     //std::cout<<std::endl;
     /*
     if(int timeS=sr_time_.restart()>ipc::SR_MESSAGE_TOLERANCE*1000)
@@ -552,12 +554,9 @@ inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,C
         //return false;
     }*/
     //bool message_sent=
-    while(true)
+    if(!ipc::write_memory(qSharedMemory,ipc_data_))
     {
-        if(ipc::write_memory(qSharedMemory,ipc_data_))
-        {
-           break;
-        }
+       return false;
     }
     //qSharedMemory->unlock();
     //qSharedMemory->connect(qSharedMemory,)
