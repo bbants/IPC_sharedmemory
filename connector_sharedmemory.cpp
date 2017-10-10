@@ -146,7 +146,7 @@ void ipc::ipc_sharedmemory::pub_register()
     IPC_DATA* register_data_=new IPC_DATA;
     //ipc::read_memory(ipc_memory_,register_data_);
     //register_data_->print();
-    //std::cout<<".";
+    std::cout<<".";
     if(ipc::recive_message(ipc_memory_,register_data_,COMMAND_MODE::COMMAND_REGISTER))
     {
         std::cout<<std::endl<<"recive register command: "<<std::endl;
@@ -207,7 +207,6 @@ void ipc::ipc_sharedmemory::pub_publish_test()
     if(!check_pub_status()){}
     else
     {
-
         std::cout<<"Sub clients [prepared!]"<<std::endl;
         IPC_DATA* publish_data_=new IPC_DATA;
         static int test=0;
@@ -218,31 +217,14 @@ void ipc::ipc_sharedmemory::pub_publish_test()
         while(it_pub_status_.hasNext())
         {
             it_pub_status_.next();
-            std::cout<<it_pub_status_.key().toStdString();
+            std::cout<<"["<<it_pub_status_.key().toStdString()<<"]";
             //QSharedMemory* sub_memory_;
             //sub_memory_=new QSharedMemory(it_pub_status_.key());
 
             ipc_sub_memory_->setKey(it_pub_status_.key());
-
-            /*
-            while(true)
-            {
-                if(ipc::send_message(ipc_sub_memory_,publish_data_,COMMAND_MODE::COMMAND_RECIVE))
-                {
-                    std::cout<<"publish..";
-                    break;
-                }
-                else if(ipc::send_message(ipc_sub_memory_,publish_data_,COMMAND_MODE::COMMAND_DEFAULT))
-                {
-                    std::cout<<"publish..";
-                    break;
-                }
-            }
-            */
             ipc::write_memory(ipc_sub_memory_,publish_data_);
             ipc::read_memory(ipc_sub_memory_,publish_data_);
-            //publish_data_->print();
-            //delete sub_memory_;
+
         }
         delete publish_data_;
     }
@@ -283,12 +265,8 @@ bool ipc::ipc_sharedmemory::pub_publish(std::string data)
 
 bool ipc::ipc_sharedmemory::check_pub_status()
 {
-
-
     if(pub_server_status_.size()==0)
     {
-        //std::cout<<"No sub client register!"<<std::endl;
-        //QThread::sleep(1);
         return false;
     }
 
@@ -322,8 +300,7 @@ std::string ipc::ipc_sharedmemory::req(const std::string& request)
 
     while(true)
     {
-        //std::cout<<std::endl<<std::endl;
-        //std::cout<<"Write into memory [start]"<<std::endl;
+
         if(ipc::send_message(ipc_memory_,req_data_,COMMAND_MODE::COMMAND_DEFAULT))
         {
                break;
@@ -333,28 +310,24 @@ std::string ipc::ipc_sharedmemory::req(const std::string& request)
         {
                break;
         }
-        //QThread::sleep(SR_MESSAGE_DELAY);
     }
+    //std::cout<<"Send request [Success!]"<<std::endl;
     while(true)
     {
-        //std::cout<<"Wait for respond [start]"<<std::endl;
 
         if(ipc::recive_message(ipc_memory_,req_data_,COMMAND_MODE::COMMAND_RESPONSE))
         {
 
             while(true)
             {
-                //std::cout<<"Set memory default [start]"<<std::endl;
                 req_data_->command_mode_=COMMAND_MODE::COMMAND_DEFAULT;
                 if(ipc::send_message(ipc_memory_,req_data_,COMMAND_MODE::COMMAND_RESPONSE))
                 {
                        break;
                 }
-                //QThread::sleep(SR_MESSAGE_DELAY);
             }
             break;
         }
-        //QThread::sleep(SR_MESSAGE_DELAY);
     }
 
 
@@ -392,12 +365,14 @@ std::string ipc::ipc_sharedmemory::rep_read()
         {
             break;
         }
-        //QThread::sleep(SR_MESSAGE_DELAY);
     }
     std::string recive_data_=rep_data_->data.toStdString();
     delete rep_data_;
     return recive_data_;
 }
+
+
+
 
     //
     //
@@ -416,14 +391,7 @@ inline bool ipc::write_memory(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_)
     QBuffer buffer_temp_;
     buffer_temp_.open(QBuffer::ReadWrite);
     QDataStream write(&buffer_temp_);
-    /*
-    QString memory=QString("/%1/%2/%3/").
-            arg((int)ipc_data_->ipc_mode_).
-            arg((int)ipc_data_->command_mode_).
-            arg(ipc_data_->data)
-            ;
-    write<<memory;
-    */
+
     QMap <QString,QString>mempry_map_;
     mempry_map_["IPC_MODE"]=QString::number((int)ipc_data_->ipc_mode_,10);
     mempry_map_["COMMAND_MODE"]=QString::number((int)ipc_data_->command_mode_);
@@ -454,7 +422,6 @@ inline bool ipc::write_memory(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_)
     char *to = static_cast<char *>(qSharedMemory->data());
     const char *from = buffer_temp_.data().data();
     memcpy(to, from, qMin((int)qSharedMemory->size(),(int)buffer_temp_.size()));
-    //std::cout<<"Sharedmemory is created, size is:"<<qSharedMemory->size()<<std::endl;
     qSharedMemory->unlock();
 
     return true;
@@ -463,15 +430,10 @@ inline bool ipc::write_memory(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_)
 inline bool ipc::read_memory(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_)
 {
 
-    QTime sr_time_;
-    //std::cout<<"Read memory..."<<std::endl;
-    sr_time_.start();
-
     if(!qSharedMemory->isAttached())
     {
         qSharedMemory->attach();
     }
-
 
     //=============read the memory=====================//
     QBuffer buffer_temp_;
@@ -480,13 +442,7 @@ inline bool ipc::read_memory(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_)
     qSharedMemory->lock();
     buffer_temp_.setData(static_cast<const char *>(qSharedMemory->constData()), qSharedMemory->size());
     buffer_temp_.open(QBuffer::ReadOnly);
-    /*
-    QString memory;
-    read>>memory;
-    ipc_data_->ipc_mode_=(IPC_MODE)memory.section("/",1,1).toInt();
-    ipc_data_->command_mode_=(COMMAND_MODE)memory.section("/",2,2).toInt();
-    ipc_data_->data=memory.section("/",3,3);
-    */
+
     QMap<QString,QString> memory_map_;
     read>>memory_map_;
     ipc_data_->ipc_mode_=(IPC_MODE)memory_map_["IPC_MODE"].toInt();
@@ -506,26 +462,18 @@ inline bool ipc::read_memory(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_)
     //
 inline bool ipc::check_command(QSharedMemory* qSharedMemory,IPC_DATA* ipc_check_data_,COMMAND_MODE commamd_mode_)
 {
-    QTime sr_time_;
-    //std::cout<<"Check command: "<<std::endl;
-    sr_time_.start();
-    //while(sr_time_.elapsed()<ipc::SR_MESSAGE_TOLERANCE*1000)
     while(true)
     {
         if(ipc::read_memory(qSharedMemory,ipc_check_data_))
         {
             break;
         }
-        //QThread::sleep(ipc::IPC_CHECK_DELAY);
-        //std::cout<<".";
     }
-    if(ipc_check_data_->command_mode_==commamd_mode_/*||(int)ipc_check_data_->command_mode_==0*/)
+    if(ipc_check_data_->command_mode_!=commamd_mode_/*||(int)ipc_check_data_->command_mode_==0*/)
     {
-        //std::cout<<"command mode-----[pass!]"<<std::endl;
-        return true;
+        return false;
     }
-    //std::cout<<"command mode-----[wrong!]"<<std::endl;
-    return false;
+    return true;
 }
     //
     // when the command_mode_ fits,write ipc_data to memory;
@@ -533,33 +481,16 @@ inline bool ipc::check_command(QSharedMemory* qSharedMemory,IPC_DATA* ipc_check_
 inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,COMMAND_MODE commamd_mode_)
 {
     IPC_DATA* ipc_check_data_=new IPC_DATA;
-    //QTime sr_time_;
-    //std::cout<<"//Start to send message://"<<std::endl;
-    //sr_time_.restart();
-    //while(sr_time_.elapsed()<ipc::SR_MESSAGE_TOLERANCE*1000)
-    //while(true)
-    //{
+
     if(!ipc::check_command(qSharedMemory,ipc_check_data_,commamd_mode_))
     {
         return false;
     }
-    //std::cout<<".";
-    //QThread::sleep(SR_MESSAGE_DELAY);
-    //}
-    //std::cout<<std::endl;
-    /*
-    if(int timeS=sr_time_.restart()>ipc::SR_MESSAGE_TOLERANCE*1000)
-    {
-        //std::cout<<"send overtime! use:"<<timeS<<std::endl;
-        //return false;
-    }*/
-    //bool message_sent=
+
     if(!ipc::write_memory(qSharedMemory,ipc_data_))
     {
        return false;
     }
-    //qSharedMemory->unlock();
-    //qSharedMemory->connect(qSharedMemory,)
     return true;
 }
 
@@ -569,25 +500,12 @@ inline bool ipc::send_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,C
 inline bool ipc::recive_message(QSharedMemory* qSharedMemory,IPC_DATA* ipc_data_,COMMAND_MODE commamd_mode_)
 {
     IPC_DATA* ipc_check_data_=new IPC_DATA;
-    QTime sr_time_;
-    //std::cout<<"//Start to recive message://"<<std::endl;
-    sr_time_.start();
-    //while(sr_time_.elapsed()<ipc::SR_MESSAGE_TOLERANCE*1000)
-
+    IPC_DATA* ipc_default_data=new IPC_DATA;
     if(!ipc::check_command(qSharedMemory,ipc_check_data_,commamd_mode_))
     {
         return false;
     }
-    if(sr_time_.elapsed()>ipc::SR_MESSAGE_TOLERANCE*1000)
-    {
-        std::cout<<"recive overtime!";
-        return false;
-    }
-    //ipc_data_=ipc_check_data_;
     ipc_data_->setValue(ipc_check_data_->ipc_mode_,ipc_check_data_->command_mode_,ipc_check_data_->data);
-    //bool message_recived_=ipc::read_memory(qSharedMemory,ipc_data_);
-    //ipc_data_->print();
-    //qSharedMemory->unlock();
     return true;
 }
 
